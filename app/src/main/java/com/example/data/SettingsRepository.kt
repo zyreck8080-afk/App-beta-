@@ -21,6 +21,12 @@ class SettingsRepository(context: Context) {
     private val _isOledMode = MutableStateFlow(prefs.getBoolean("oled_mode", false))
     val isOledMode: StateFlow<Boolean> = _isOledMode.asStateFlow()
 
+    private val _isMinimalistMode = MutableStateFlow(prefs.getBoolean("minimalist_mode", false))
+    val isMinimalistMode: StateFlow<Boolean> = _isMinimalistMode.asStateFlow()
+
+    private val _monthlyGoal = MutableStateFlow(prefs.getFloat("monthly_goal", 5000f))
+    val monthlyGoal: StateFlow<Float> = _monthlyGoal.asStateFlow()
+
     fun setPrimaryColor(hex: String) {
         prefs.edit().putString("primary_color", hex).apply()
         _primaryColorHex.value = hex
@@ -41,5 +47,16 @@ class SettingsRepository(context: Context) {
         val newVal = !_isOledMode.value
         prefs.edit().putBoolean("oled_mode", newVal).apply()
         _isOledMode.value = newVal
+    }
+
+    fun toggleMinimalistMode() {
+        val newVal = !_isMinimalistMode.value
+        prefs.edit().putBoolean("minimalist_mode", newVal).apply()
+        _isMinimalistMode.value = newVal
+    }
+
+    fun setMonthlyGoal(goal: Float) {
+        prefs.edit().putFloat("monthly_goal", goal).apply()
+        _monthlyGoal.value = goal
     }
 }

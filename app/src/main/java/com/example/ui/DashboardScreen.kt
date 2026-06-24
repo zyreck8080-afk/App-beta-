@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +38,14 @@ import java.util.*
 
 import androidx.compose.material.icons.filled.Settings
 
+val motivationalMessages = listOf(
+    "¡Hoy eres Fuego! 🔥",
+    "Cada venta cuenta. ¡Sigue así! 💫",
+    "Construyendo un imperio paso a paso. 👑",
+    "¡Excelente trabajo el de hoy! 🌟",
+    "Tus finanzas bajo control. ✨"
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -48,14 +58,30 @@ fun DashboardScreen(
     val products by viewModel.allProducts.collectAsStateWithLifecycle()
     val sales by viewModel.allSales.collectAsStateWithLifecycle()
     val isPrivacyMode by viewModel.isPrivacyMode.collectAsStateWithLifecycle()
+    val isMinimalistMode by viewModel.isMinimalistMode.collectAsStateWithLifecycle()
+    val monthlyGoal by viewModel.monthlyGoal.collectAsStateWithLifecycle()
 
     val haptic = LocalHapticFeedback.current
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Catálogo", "Ventas")
 
+    var searchQuery by remember { mutableStateOf("") }
+    val isSearchActive = searchQuery.isNotBlank()
+
+    val motivationalMessage = remember { motivationalMessages.random() }
+
+    val filteredProducts = if (isSearchActive) {
+        products.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    } else products
+
+    val filteredSales = if (isSearchActive) {
+        sales.filter { it.productName.contains(searchQuery, ignoreCase = true) }
+    } else sales
+
     val totalInvestment = if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
     val totalProfit = if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    val salesProfit = sales.sumOf { it.netProfit }
 
     fun displayMoney(amount: Double): String {
         return if (isPrivacyMode) "$****" else String.format(Locale.getDefault(), "$%.2f", amount)
@@ -65,7 +91,11 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Text("LuminaProfit", style = MaterialTheme.typography.titleLarge)
+                    if (isMinimalistMode) {
+                        Text("Lumina", style = MaterialTheme.typography.titleLarge)
+                    } else {
+                        Text("LuminaProfit", style = MaterialTheme.typography.titleLarge)
+                    }
                 },
                 actions = {
                     IconButton(onClick = { 
@@ -106,16 +136,59 @@ fun DashboardScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
-            
-            Text(
-                "¡Hola, Emprendedora!",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
+            if (!isMinimalistMode) {
+                Text(
+                    motivationalMessage,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Buscar...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpiar")
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Stats Card
-            Card(
+            if (!isMinimalistMode) {
+                // Goal Progress
+                val progress = (salesProfit / monthlyGoal).toFloat().coerceIn(0f, 1f)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Progreso Mensual", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${(progress * 100).toInt()}% de $${monthlyGoal.toInt()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Stats Card
+                Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -156,8 +229,8 @@ fun DashboardScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             
             TabRow(
                 selectedTabIndex = selectedTabIndex,
@@ -176,35 +249,37 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (selectedTabIndex == 0) {
-                if (products.isEmpty()) {
+                if (filteredProducts.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No hay productos. Añade el primero.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        Text(if(isSearchActive) "No se encontraron productos." else "No hay productos. Añade el primero.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 80.dp)
                     ) {
-                        items(products, key = { it.id }) { product ->
+                        items(filteredProducts, key = { it.id }) { product ->
                             ProductCard(product = product, isPrivacyMode = isPrivacyMode, onDelete = { viewModel.deleteProduct(it) })
                         }
                     }
                 }
             } else {
-                if (sales.isEmpty()) {
+                if (filteredSales.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Aún no tienes ventas registradas.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        Text(if(isSearchActive) "No se encontraron ventas." else "Aún no tienes ventas registradas.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 80.dp)
                     ) {
-                        item {
-                            com.example.ui.components.FinancialChart(sales = sales)
-                            Spacer(modifier = Modifier.height(4.dp))
+                        if (!isMinimalistMode && !isSearchActive) {
+                            item {
+                                com.example.ui.components.FinancialChart(sales = filteredSales)
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
                         }
-                        items(sales, key = { "sale_${it.id}" }) { sale ->
+                        items(filteredSales, key = { "sale_${it.id}" }) { sale ->
                             SaleCard(sale = sale, isPrivacyMode = isPrivacyMode, onDelete = { viewModel.deleteSale(it) })
                         }
                     }

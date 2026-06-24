@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.Product
 import com.example.data.Sale
@@ -43,6 +45,8 @@ fun AddSaleScreen(
 
     val salePriceTotal = (selectedProduct?.salePrice ?: 0.0) * qtyNum
     val netProfit = salePriceTotal - ((selectedProduct?.totalCost ?: 0.0) * qtyNum) - tExp - fExp - oExp
+
+    val haptic = LocalHapticFeedback.current
 
     Scaffold(
         topBar = {
@@ -171,6 +175,7 @@ fun AddSaleScreen(
             Button(
                 onClick = {
                     if (selectedProduct != null && qtyNum > 0) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         viewModel.addSale(
                             Sale(
                                 productId = selectedProduct!!.id,

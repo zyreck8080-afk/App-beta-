@@ -10,8 +10,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -47,7 +51,12 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
             Text("Color de Acento", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -101,6 +110,45 @@ fun SettingsScreen(
                     onCheckedChange = { viewModel.toggleOledMode() }
                 )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text("Modo Enfoque", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            val isMinimalistMode by viewModel.isMinimalistMode.collectAsStateWithLifecycle()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Modo Súper Minimalista\n(Oculta gráficas y metas)", style = MaterialTheme.typography.bodyLarge)
+                Switch(
+                    checked = isMinimalistMode,
+                    onCheckedChange = { viewModel.toggleMinimalistMode() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text("Metas Financieras", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            val monthlyGoal by viewModel.monthlyGoal.collectAsStateWithLifecycle()
+            var monthlyGoalStr by remember { mutableStateOf(monthlyGoal.toInt().toString()) }
+
+            OutlinedTextField(
+                value = monthlyGoalStr,
+                onValueChange = {
+                    monthlyGoalStr = it
+                    it.toFloatOrNull()?.let { goal -> viewModel.updateMonthlyGoal(goal) }
+                },
+                label = { Text("Meta de Ganancia Mensual ($)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
