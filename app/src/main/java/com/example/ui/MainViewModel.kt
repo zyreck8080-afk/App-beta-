@@ -21,11 +21,15 @@ class MainViewModel(
     val typographyStyle: StateFlow<String> = settingsRepository.typographyStyle
     val isPrivacyMode: StateFlow<Boolean> = settingsRepository.isPrivacyMode
     val isOledMode: StateFlow<Boolean> = settingsRepository.isOledMode
+    val isMinimalistMode: StateFlow<Boolean> = settingsRepository.isMinimalistMode
+    val monthlyGoal: StateFlow<Float> = settingsRepository.monthlyGoal
 
     fun updatePrimaryColor(hex: String) = settingsRepository.setPrimaryColor(hex)
     fun updateTypographyStyle(style: String) = settingsRepository.setTypographyStyle(style)
     fun togglePrivacyMode() = settingsRepository.togglePrivacyMode()
     fun toggleOledMode() = settingsRepository.toggleOledMode()
+    fun toggleMinimalistMode() = settingsRepository.toggleMinimalistMode()
+    fun updateMonthlyGoal(goal: Float) = settingsRepository.setMonthlyGoal(goal)
 
     val allProducts: StateFlow<List<Product>> = repository.allProducts.stateIn(
         scope = viewModelScope,
