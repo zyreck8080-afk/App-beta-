@@ -52,10 +52,20 @@ fun DashboardScreen(
     val haptic = LocalHapticFeedback.current
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Catálogo", "Ventas")
 
-    val totalInvestment = if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
-    val totalProfit = if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    // Performance optimization: Memoize the tabs list to prevent reallocation on every recomposition.
+    val tabs = remember { listOf("Catálogo", "Ventas") }
+
+    // Performance optimization: Memoize O(N) calculations.
+    // Impact: Prevents recalculating sumOf for large lists of products or sales on every recomposition
+    // unless the underlying data or selected tab actually changes.
+    val totalInvestment = remember(selectedTabIndex, products, sales) {
+        if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
+    }
+
+    val totalProfit = remember(selectedTabIndex, products, sales) {
+        if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    }
 
     fun displayMoney(amount: Double): String {
         return if (isPrivacyMode) "$****" else String.format(Locale.getDefault(), "$%.2f", amount)
