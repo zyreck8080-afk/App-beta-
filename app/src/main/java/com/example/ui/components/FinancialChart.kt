@@ -38,9 +38,12 @@ data class DailyFinancials(
 fun FinancialChart(sales: List<Sale>, modifier: Modifier = Modifier) {
     val dailyStats = remember(sales) {
         val format = SimpleDateFormat("dd/MM", Locale.getDefault())
+        // ⚡ Bolt Optimization: Reuse Calendar instance
+        // Re-instantiating Calendar inside the loop is expensive and creates GC pressure.
+        // Reusing a single instance reduces allocation and significantly speeds up date truncation.
+        val c = java.util.Calendar.getInstance()
         sales.groupBy {
             // Agrupar por día (truncando horas)
-            val c = java.util.Calendar.getInstance()
             c.timeInMillis = it.timestamp
             c.set(java.util.Calendar.HOUR_OF_DAY, 0)
             c.set(java.util.Calendar.MINUTE, 0)
