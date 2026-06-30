@@ -1,0 +1,3 @@
+## 2026-06-30 - Unmemoized O(N) operations in Compose renders
+**Learning:** Found O(N) list aggregations (`sumOf`) running synchronously on the main thread during every recomposition in `DashboardScreen.kt`. Even though the local Room database handles the heavy lifting of fetching data, performing calculations like `sumOf` repeatedly in a composable function when unrelated state changes (like toggling privacy mode) can cause jank and frame drops, especially as the list size grows.
+**Action:** Always wrap derived state calculations from lists (like sums, filters, sorts) in `remember(dependencies)` block in Compose to cache the result across recompositions unless the dependencies actually change.
