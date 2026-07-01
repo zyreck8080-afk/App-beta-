@@ -55,7 +55,7 @@ class ChatViewModel : ViewModel() {
                     systemInstruction = systemInstruction
                 )
 
-                var assistantText = ""
+                val assistantTextBuilder = java.lang.StringBuilder()
                 withContext(Dispatchers.IO) {
                     val apiKey = BuildConfig.GEMINI_API_KEY
                     val response = RetrofitClient.service.generateContentStream(apiKey, request)
@@ -75,10 +75,16 @@ class ChatViewModel : ViewModel() {
                                         ?.get("text")?.jsonPrimitive?.content
                                     
                                     if (chunkText != null) {
-                                        assistantText += chunkText
+                                        // ⚡ Bolt Performance Optimization:
+                                        // Replaced String concatenation (+=) with StringBuilder.
+                                        // Repeated string concatenation inside loops creates a new String object each time,
+                                        // which has O(n^2) complexity and generates excessive garbage. StringBuilder is O(n)
+                                        // and significantly reduces memory allocation and time complexity.
+                                        assistantTextBuilder.append(chunkText)
+                                        val currentText = assistantTextBuilder.toString()
                                         withContext(Dispatchers.Main) {
                                             _messages.value = _messages.value.map {
-                                                if (it.id == assistantMsgId) it.copy(text = assistantText) else it
+                                                if (it.id == assistantMsgId) it.copy(text = currentText) else it
                                             }
                                         }
                                     }
