@@ -54,8 +54,16 @@ fun DashboardScreen(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Catálogo", "Ventas")
 
-    val totalInvestment = if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
-    val totalProfit = if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    // Performance Optimization (Bolt ⚡): Memoize O(N) list calculations with `remember`
+    // This prevents `sumOf` from running on the UI thread during every single recomposition,
+    // which previously caused stuttering during scroll and animations.
+    val totalInvestment = remember(selectedTabIndex, products, sales) {
+        if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
+    }
+
+    val totalProfit = remember(selectedTabIndex, products, sales) {
+        if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    }
 
     fun displayMoney(amount: Double): String {
         return if (isPrivacyMode) "$****" else String.format(Locale.getDefault(), "$%.2f", amount)
