@@ -48,12 +48,22 @@ fun FinancialChart(sales: List<Sale>, modifier: Modifier = Modifier) {
             c.set(java.util.Calendar.MILLISECOND, 0)
             c.timeInMillis
         }.map { (timestamp, salesForDay) ->
+            // Performance optimization: Accumulate earnings, expenses, and profit in a single pass O(N)
+            // instead of doing three separate passes O(3N) over the list of sales.
+            var earnings = 0f
+            var expenses = 0f
+            var profit = 0f
+            for (sale in salesForDay) {
+                earnings += sale.salePriceTotal.toFloat()
+                expenses += sale.totalExpenses.toFloat()
+                profit += sale.netProfit.toFloat()
+            }
             DailyFinancials(
                 dateStr = format.format(Date(timestamp)),
                 timestamp = timestamp,
-                earnings = salesForDay.sumOf { it.salePriceTotal }.toFloat(),
-                expenses = salesForDay.sumOf { it.totalExpenses }.toFloat(),
-                profit = salesForDay.sumOf { it.netProfit }.toFloat()
+                earnings = earnings,
+                expenses = expenses,
+                profit = profit
             )
         }.sortedBy { it.timestamp }.takeLast(7)
     }
