@@ -54,8 +54,13 @@ fun DashboardScreen(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Catálogo", "Ventas")
 
-    val totalInvestment = if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
-    val totalProfit = if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    // Optimize: Memoize sums to prevent O(n) recalculations on every recomposition.
+    val totalInvestment = remember(selectedTabIndex, products, sales) {
+        if (selectedTabIndex == 0) products.sumOf { it.totalCost } else sales.sumOf { it.totalExpenses }
+    }
+    val totalProfit = remember(selectedTabIndex, products, sales) {
+        if (selectedTabIndex == 0) products.sumOf { it.profitNet } else sales.sumOf { it.netProfit }
+    }
 
     fun displayMoney(amount: Double): String {
         return if (isPrivacyMode) "$****" else String.format(Locale.getDefault(), "$%.2f", amount)
