@@ -95,8 +95,9 @@ class ChatViewModel : ViewModel() {
                 }
                 
             } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Error communicating with Gemini API", e)
                 _messages.value = _messages.value.map {
-                    if (it.id == assistantMsgId) it.copy(text = "Error de conexión: ${e.message}", isEvaluating = false) else it
+                    if (it.id == assistantMsgId) it.copy(text = "Error de conexión. Por favor, intenta de nuevo.", isEvaluating = false) else it
                 }
             }
         }
