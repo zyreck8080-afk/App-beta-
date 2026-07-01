@@ -10,6 +10,7 @@ import com.example.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import android.util.Log
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,7 +84,7 @@ class ChatViewModel : ViewModel() {
                                         }
                                     }
                                 } catch (e: Exception) {
-                                    // ignore parse errors
+                                    Log.e("ChatViewModel", "Error parsing streaming chunk", e)
                                 }
                             }
                         }
